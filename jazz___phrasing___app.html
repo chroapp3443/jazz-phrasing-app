@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Piano Note Highlighter</title>
+
+<style>
+body {
+  margin: 0;
+  padding: 10px;
+  font-family: sans-serif;
+}
+
+.controls {
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.controls label {
+  margin-right: 8px;
+}
+
+.piano {
+  display: flex;
+  height: 160px;
+  user-select: none;
+  overflow-x: auto;
+  position: relative;
+}
+
+/* 白鍵 */
+.white-key {
+  flex: 0 0 40px; /* 白鍵幅固定 */
+  height: 100%;
+  border: 1px solid #000;
+  background: white;
+  position: relative;
+  box-sizing: border-box;
+}
+
+/* 黒鍵 */
+.black-key {
+  position: absolute;
+  width: 60%;
+  height: 60%;
+  top: 0;
+  left: 98%;       /* ← 黒鍵を右寄りに微調整 */
+  background: black;
+  transform: translateX(-50%);
+  z-index: 2;
+  box-sizing: border-box;
+}
+
+.white-key:active,
+.black-key:active {
+  opacity: 0.7;
+}
+</style>
+</head>
+
+<body>
+
+<div class="controls">
+  <strong>音を選択：</strong><br>
+  <label><input type="checkbox" value="C">C</label>
+  <label><input type="checkbox" value="C#">C#</label>
+  <label><input type="checkbox" value="D">D</label>
+  <label><input type="checkbox" value="D#">D#</label>
+  <label><input type="checkbox" value="E">E</label>
+  <label><input type="checkbox" value="F">F</label>
+  <label><input type="checkbox" value="F#">F#</label>
+  <label><input type="checkbox" value="G">G</label>
+  <label><input type="checkbox" value="G#">G#</label>
+  <label><input type="checkbox" value="A">A</label>
+  <label><input type="checkbox" value="A#">A#</label>
+  <label><input type="checkbox" value="B">B</label>
+  <br><br>
+  <label>
+    ハイライト色：
+    <input type="color" id="colorPicker" value="#ffcc66">
+  </label>
+</div>
+
+<div class="piano" id="piano"></div>
+
+<script>
+const whiteSequence = [
+  "G","A","B","C","D","E","F","G",
+  "A","B","C","D","E","F","G",
+  "A","B","C","D","E","F"
+];
+
+const blackAfter = {
+  "A":"A#",
+  "C":"C#",
+  "D":"D#",
+  "F":"F#",
+  "G":"G#"
+};
+
+const piano = document.getElementById("piano");
+const checkboxes = [...document.querySelectorAll("input[type=checkbox]")];
+const colorPicker = document.getElementById("colorPicker");
+
+/* 白鍵・黒鍵作成 */
+whiteSequence.forEach(note => {
+  const white = document.createElement("div");
+  white.className = "white-key";
+  white.dataset.note = note;
+
+  white.addEventListener("click", () => toggleNote(note));
+
+  /* 黒鍵があれば白鍵の子要素として追加 */
+  if(blackAfter[note]){
+    const black = document.createElement("div");
+    black.className = "black-key";
+    black.dataset.note = blackAfter[note];
+
+    black.addEventListener("click", e=>{
+      e.stopPropagation();
+      toggleNote(black.dataset.note);
+    });
+
+    white.appendChild(black);
+  }
+
+  piano.appendChild(white);
+});
+
+/* チェックボックス同期 */
+checkboxes.forEach(cb=>cb.addEventListener("change", updateHighlight));
+colorPicker.addEventListener("input", updateHighlight);
+
+/* タップでON/OFF */
+function toggleNote(note){
+  const cb = checkboxes.find(c=>c.value===note);
+  if(!cb) return;
+  cb.checked = !cb.checked;
+  updateHighlight();
+}
+
+/* ハイライト更新 */
+function updateHighlight(){
+  const selected = checkboxes.filter(c=>c.checked).map(c=>c.value);
+  const color = colorPicker.value;
+
+  document.querySelectorAll(".white-key,.black-key").forEach(key=>{
+    const isBlack = key.classList.contains("black-key");
+    if(selected.includes(key.dataset.note)){
+      key.style.background = color;
+      key.style.border = isBlack ? "2px solid black" : "1px solid black";
+    }else{
+      key.style.background = isBlack ? "black" : "white";
+      key.style.border = isBlack ? "none" : "1px solid black";
+    }
+  });
+}
+</script>
+
+</body>
+</html>

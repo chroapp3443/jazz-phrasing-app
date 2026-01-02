@@ -6,11 +6,6 @@
 <title>Piano Note Highlighter</title>
 
 <style>
-:root {
-  --white-key-width: min(5.5vw, 42px);
-  --black-key-width: calc(var(--white-key-width) * 0.65);
-}
-
 body {
   margin: 0;
   padding: 10px;
@@ -27,32 +22,34 @@ body {
 }
 
 .piano {
-  position: relative;
   display: flex;
   height: 160px;
   user-select: none;
   overflow-x: auto;
+  position: relative;
 }
 
 /* 白鍵 */
 .white-key {
-  width: var(--white-key-width);
+  flex: 0 0 40px; /* 固定幅 */
   height: 100%;
   border: 1px solid #000;
   background: white;
+  position: relative;
   box-sizing: border-box;
 }
 
 /* 黒鍵 */
 .black-key {
   position: absolute;
-  width: var(--black-key-width);
+  width: 60%;
   height: 60%;
-  background: black;
   top: 0;
+  left: 70%; /* 白鍵の右寄り */
+  background: black;
+  transform: translateX(-50%);
   z-index: 2;
   box-sizing: border-box;
-  transform: translateX(-50%);
 }
 
 .white-key:active,
@@ -88,74 +85,72 @@ body {
 <div class="piano" id="piano"></div>
 
 <script>
-const blackAfter = {
-  "A": "A#",
-  "C": "C#",
-  "D": "D#",
-  "F": "F#",
-  "G": "G#"
-};
-
-/* Ab(G#)始まり → F終わり（白鍵） */
 const whiteSequence = [
   "G","A","B","C","D","E","F","G",
   "A","B","C","D","E","F","G",
   "A","B","C","D","E","F"
 ];
 
-const piano = document.getElementById("piano");
-const colorPicker = document.getElementById("colorPicker");
-const checkboxes = [...document.querySelectorAll("input[type=checkbox]")];
+const blackAfter = {
+  "A":"A#",
+  "C":"C#",
+  "D":"D#",
+  "F":"F#",
+  "G":"G#"
+};
 
-whiteSequence.forEach((note, i) => {
+const piano = document.getElementById("piano");
+const checkboxes = [...document.querySelectorAll("input[type=checkbox]")];
+const colorPicker = document.getElementById("colorPicker");
+
+/* 白鍵・黒鍵作成 */
+whiteSequence.forEach(note => {
   const white = document.createElement("div");
   white.className = "white-key";
   white.dataset.note = note;
-  piano.appendChild(white);
 
-  white.addEventListener("click", () => toggle(note));
+  white.addEventListener("click", () => toggleNote(note));
 
-  if (blackAfter[note]) {
+  /* 黒鍵があれば白鍵に子要素として追加 */
+  if(blackAfter[note]){
     const black = document.createElement("div");
     black.className = "black-key";
     black.dataset.note = blackAfter[note];
 
-    const whiteWidth = getComputedStyle(document.documentElement)
-      .getPropertyValue("--white-key-width");
-
-    black.style.left = `calc(${i} * ${whiteWidth} + ${whiteWidth})`;
-    piano.appendChild(black);
-
-    black.addEventListener("click", e => {
+    black.addEventListener("click", e=>{
       e.stopPropagation();
-      toggle(black.dataset.note);
+      toggleNote(black.dataset.note);
     });
+
+    white.appendChild(black);
   }
+
+  piano.appendChild(white);
 });
 
-checkboxes.forEach(cb =>
-  cb.addEventListener("change", update)
-);
-colorPicker.addEventListener("input", update);
+/* チェックボックス同期 */
+checkboxes.forEach(cb=>cb.addEventListener("change", updateHighlight));
+colorPicker.addEventListener("input", updateHighlight);
 
-function toggle(note) {
-  const cb = checkboxes.find(c => c.value === note);
-  if (!cb) return;
+/* タップでON/OFF */
+function toggleNote(note){
+  const cb = checkboxes.find(c=>c.value===note);
+  if(!cb) return;
   cb.checked = !cb.checked;
-  update();
+  updateHighlight();
 }
 
-function update() {
-  const selected = checkboxes.filter(c => c.checked).map(c => c.value);
+/* ハイライト更新 */
+function updateHighlight(){
+  const selected = checkboxes.filter(c=>c.checked).map(c=>c.value);
   const color = colorPicker.value;
 
-  document.querySelectorAll(".white-key, .black-key").forEach(key => {
+  document.querySelectorAll(".white-key,.black-key").forEach(key=>{
     const isBlack = key.classList.contains("black-key");
-
-    if (selected.includes(key.dataset.note)) {
+    if(selected.includes(key.dataset.note)){
       key.style.background = color;
       key.style.border = isBlack ? "2px solid black" : "1px solid black";
-    } else {
+    }else{
       key.style.background = isBlack ? "black" : "white";
       key.style.border = isBlack ? "none" : "1px solid black";
     }
@@ -165,4 +160,3 @@ function update() {
 
 </body>
 </html>
-

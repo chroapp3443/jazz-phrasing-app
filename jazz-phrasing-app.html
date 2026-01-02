@@ -6,6 +6,11 @@
 <title>Piano Note Highlighter</title>
 
 <style>
+:root {
+  --white-key-width: min(5.5vw, 42px);
+  --black-key-width: calc(var(--white-key-width) * 0.65);
+}
+
 body {
   margin: 0;
   padding: 10px;
@@ -26,24 +31,28 @@ body {
   display: flex;
   height: 160px;
   user-select: none;
+  overflow-x: auto;
 }
 
+/* 白鍵 */
 .white-key {
-  width: 40px;
+  width: var(--white-key-width);
   height: 100%;
   border: 1px solid #000;
   background: white;
   box-sizing: border-box;
 }
 
+/* 黒鍵 */
 .black-key {
   position: absolute;
-  width: 26px;
+  width: var(--black-key-width);
   height: 60%;
   background: black;
   top: 0;
   z-index: 2;
   box-sizing: border-box;
+  transform: translateX(-50%);
 }
 
 .white-key:active,
@@ -87,7 +96,7 @@ const blackAfter = {
   "G": "G#"
 };
 
-/* Ab(G#)始まり → F終わり（白鍵列） */
+/* Ab(G#)始まり → F終わり（白鍵） */
 const whiteSequence = [
   "G","A","B","C","D","E","F","G",
   "A","B","C","D","E","F","G",
@@ -110,7 +119,11 @@ whiteSequence.forEach((note, i) => {
     const black = document.createElement("div");
     black.className = "black-key";
     black.dataset.note = blackAfter[note];
-    black.style.left = `${i * 40 + 28}px`;
+
+    const whiteWidth = getComputedStyle(document.documentElement)
+      .getPropertyValue("--white-key-width");
+
+    black.style.left = `calc(${i} * ${whiteWidth} + ${whiteWidth})`;
     piano.appendChild(black);
 
     black.addEventListener("click", e => {
@@ -141,11 +154,7 @@ function update() {
 
     if (selected.includes(key.dataset.note)) {
       key.style.background = color;
-      if (isBlack) {
-        key.style.border = "2px solid black";
-      } else {
-        key.style.border = "1px solid black";
-      }
+      key.style.border = isBlack ? "2px solid black" : "1px solid black";
     } else {
       key.style.background = isBlack ? "black" : "white";
       key.style.border = isBlack ? "none" : "1px solid black";
@@ -156,3 +165,4 @@ function update() {
 
 </body>
 </html>
+
